@@ -2,7 +2,7 @@
 You're exploiting a binary, you've found an address leak, now you need the libc version  
 and most importantly, the addresses of symbols like `system` and `str_bin_sh`.
 
-This tool is the easiest to setup & use!  
+**This tool is the easiest to setup & use!**  
 The shortest path to victory 🏆
 
 ## Disclaimer
