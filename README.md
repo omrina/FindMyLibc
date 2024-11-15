@@ -23,7 +23,7 @@ matching_libc = find_libc(elf, leak_libc_address)
 See below the example.
 
 # Example
-Here's a simple example of exploit script (see [`./example.py`](https://github.com/omrina/FindMyLibc/blob/main/example.py)).
+Here's a simple example of exploit script (see [`.example/example.py`](https://github.com/omrina/FindMyLibc/blob/main/example/example.py)).
 
 ### Setup your binary exploit script:
 Whatever you need...
@@ -72,7 +72,7 @@ print("/bin/sh at: %s" % hex(binsh_address))
 print("system at: %s " % hex(system_address))
 ```
 
-The output from `./example.py`:
+The output from `.example/example.py`:
 
 ![image](https://github.com/user-attachments/assets/dfd95d72-e202-4d59-9e44-fcfd4d01eccd)
 
