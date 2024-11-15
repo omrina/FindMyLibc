@@ -10,18 +10,15 @@ This was tested only on 32-bit binary, so it might not work properly on 64-bit b
 Would be updated!
 
 # Setup
-Download this repo:  
 ```
-git clone https://github.com/omrina/FindMyLibc.git
+pip install findmylibc
 ```  
-Then just import:  
+Then use easily:  
 ```
-from FindMyLibc import *
-```    
-And use the only function you need:
-```
+from findmylibc import *
+...
 matching_libc = find_libc(elf, leak_libc_address)
-```  
+```    
 
 See below the example.
 

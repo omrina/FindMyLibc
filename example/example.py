@@ -1,5 +1,5 @@
 from pwn import *
-from FindMyLibc import *
+from findmylibc import *
 
 # Setup your binary
 elf = ELF("./elf_name")
