@@ -26,7 +26,7 @@ See below the example.
 Here's a simple example of exploit script (see [`.example/example.py`](https://github.com/omrina/FindMyLibc/blob/main/example/example.py)).
 
 ### Setup your binary exploit script:
-Whatever you need...
+Whatever you need here...
 ```
 from pwn import *
 from FindMyLibc import *
@@ -81,7 +81,7 @@ What is `chosen_lib`:
 
 ![image](https://github.com/user-attachments/assets/06ff78eb-f59b-4ba6-b199-079e0e091781)
 
-### How do we use the results:
+### How to use the results:
 You would probably need only `syms`, each value is the integer of the calcualted address, so you can use it like:
 ```
 shell_rop = p32(system_address) + b'EEEE' + p32(binsh_address)
@@ -92,7 +92,7 @@ io.interactive()
 # How does it work?
 The finder leaks the address of common symbols:  
 `_common_symbols_to_leak = ['__libc_start_main', 'puts', 'printf', 'gets', 'read', 'write', 'send', 'recv']`  
-Then it makes reqeusts to the public `https://libc.rip/api/find'`, with different combination of leaked symbols every time.  
+Then it makes reqeusts to the public `https://libc.rip/api/find`, with different combination of leaked symbols every time.  
 
 E.g.- we send a request with `{'puts': 'leaked-address-of-puts', 'gets': 'leaked-address-of-gets'}`.  
 A response would be a list of matching libc versions metadata (each item is like a part of `chosen_lib` seen earlier).
