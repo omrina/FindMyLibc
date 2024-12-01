@@ -36,7 +36,13 @@ You must create this function,
 where the only parameter is of type **string** - the symbol name to leak,  
 and the return value is the leaked address as **integer**.
 
-There's another optional argument, see [stop_libs_amount](#the-stop_libs_amount-argument-optional).
+
+## `stop_libs_amount` (optional)
+The default value is `3`- if we reach 3 matching libc versions, it's enough and we stop searching.  
+You can change it if you'd like to:  
+```python
+matching_libc = find_libc(elf, leak_libc_address, stop_libs_amount=2)
+```
 
 # Example
 Here's a simple example of an exploit script (see [`.example/example.py`](https://github.com/omrina/FindMyLibc/blob/main/example/example.py)).
@@ -116,14 +122,3 @@ Then it makes reqeusts to the public `https://libc.rip/api/find`, with different
 
 E.g.- we send a request with `{'puts': 'leaked-address-of-puts', 'gets': 'leaked-address-of-gets'}`.  
 A response would be a list of matching libc versions metadata (each item is like a part of `chosen_lib` seen earlier).
-
-## The `stop_libs_amount` argument (optional)
-The `find_libc` function has a `stop_libs_amount` argument with default of `3`,  
-meaning- if we reach 3 matching libc versions, it's enough and we stop searching.  
-
-You can change it if you'd like to:  
-```python
-matching_libc = find_libc(elf, leak_libc_address, stop_libs_amount=2)
-```
-
-
