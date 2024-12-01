@@ -5,26 +5,26 @@ _json_headers = {'Content-Type': 'application/json'}
 
 _common_symbols_to_leak = ['__libc_start_main', 'puts', 'printf', 'gets', 'read', 'write', 'send', 'recv']
 
-def _string_to_hex(hex_as_string):
-    return int(hex_as_string, 16)
+"""
+Returns: smallest list of matching libs (each lib is dict with 'id' 'download_url', 'base_address', 'syms' and more)
+The 'syms' is a dictionary of {symbol_name_str: calculated_address_integer} 
+"""
+def find_libc(elf, leak_symbol_address, stop_libs_amount=3):
+    matching_libc = _get_libc_versions(elf, leak_symbol_address, stop_libs_amount)
+    for lib in matching_libc:
+        all_symbols_raw_response = requests.get(lib['symbols_url'], headers=_json_headers)
+        symbol_name_to_offset = {i.split(' ')[0]: i.split(' ')[-1] for i in all_symbols_raw_response.content.decode("utf-8").strip().split('\n')}
 
-def _add_base_address(matching_libs_response, leaked_symbols_for_request):
-    for lib in matching_libs_response:
-        lib['base_address'] = next((_string_to_hex(leaked_symbols_for_request['symbols'][name]) - _string_to_hex(offset))
-                                   for (name,offset) in lib['symbols'].items()
-                                   if name in leaked_symbols_for_request['symbols'].keys())
+        for name, string_value in symbol_name_to_offset.items():
+            symbol_name_to_offset[name] = _string_to_hex(string_value) + lib['base_address']
 
-    return matching_libs_response
+        lib['syms'] = symbol_name_to_offset
 
-def _is_fewer_matching_libs(current_least_matching_libs, matching_libs):
-    return not current_least_matching_libs or (matching_libs and len(matching_libs) < len(current_least_matching_libs))
+    return matching_libc
 
-def _print_matching_libs(matching_libs):
-    matching_libs_output = '\n'.join([lib['id'] for lib in matching_libs])
-    print(f"Matching libc versions:\n{matching_libs_output}")
 
 """
-Returns: smallest list of matching libs (each lib is dict with 'id' 'download_url', 'base_address and more)
+Returns: returns same as `find_libc` but without the `syms` dict
 """
 def _get_libc_versions(elf, leak_symbol_address, stop_libs_amount=3):
     url = 'https://libc.rip/api/find'
@@ -43,6 +43,7 @@ def _get_libc_versions(elf, leak_symbol_address, stop_libs_amount=3):
                 else:
                     leaked_address = leak_symbol_address(symbol)
                     if leaked_address:
+                        ensure_leaked_address_type(leaked_address)
                         leaked_symbols_for_request["symbols"][symbol] = hex(leaked_address)
                         leaked_addresses_cache[symbol] = hex(leaked_address)
 
@@ -77,20 +78,37 @@ def _get_libc_versions(elf, leak_symbol_address, stop_libs_amount=3):
 
     return least_matching_libs
 
-"""
-Returns: same as _get_libc_versions, but with 'syms' key with value of dictionary of {symbol:full_address} 
-"""
-def find_libc(elf, leak_symbol_address, stop_libs_amount=3):
-    matching_libc = _get_libc_versions(elf, leak_symbol_address, stop_libs_amount)
-    for lib in matching_libc:
-        all_symbols_raw_response = requests.get(lib['symbols_url'], headers=_json_headers)
-        symbol_name_to_offset = {i.split(' ')[0]: i.split(' ')[-1] for i in all_symbols_raw_response.content.decode("utf-8").strip().split('\n')}
 
-        for name, string_value in symbol_name_to_offset.items():
-            symbol_name_to_offset[name] = _string_to_hex(string_value) + lib['base_address']
+def ensure_leaked_address_type(leaked_address):
+    if type(leaked_address) is not int:
+        raise Exception("\n[FindMyLibc]:\nYour function 'leak_symbol_address' "
+               "should return integer value of an address,"
+               f" instead got value of type {type(leaked_address)}")
 
-        lib['syms'] = symbol_name_to_offset
 
-    return matching_libc
+def _add_base_address(matching_libs_response, leaked_symbols_for_request):
+    for lib in matching_libs_response:
+        lib['base_address'] = next((_string_to_hex(leaked_symbols_for_request['symbols'][name]) - _string_to_hex(offset))
+                                   for (name,offset) in lib['symbols'].items()
+                                   if name in leaked_symbols_for_request['symbols'].keys())
+
+    return matching_libs_response
+
+
+def _string_to_hex(hex_as_string):
+    return int(hex_as_string, 16)
+
+
+def _is_fewer_matching_libs(current_least_matching_libs, matching_libs):
+    return not current_least_matching_libs or (matching_libs and len(matching_libs) < len(current_least_matching_libs))
+
+
+def _print_matching_libs(matching_libs):
+    if not matching_libs:
+        raise Exception("\n[FindMyLibc]:\nNo matching libc versions were found :(\nMake sure that your leaking function works properly.")
+
+    matching_libs_output = '\n'.join([lib['id'] for lib in matching_libs])
+    print(f"Matching libc versions:\n{matching_libs_output}")
+
 
 __all__ = ["find_libc"]
