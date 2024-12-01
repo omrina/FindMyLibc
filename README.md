@@ -36,7 +36,7 @@ You must create this function,
 where the only parameter is of type **string** - the symbol name to leak,  
 and the return value is the leaked address as **integer**.
 
-There's another optional argument, see [Link to the header](#the-stop_libs_amount-argument-optional).
+There's another optional argument, see [stop_libs_amount](#the-stop_libs_amount-argument-optional).
 
 # Example
 Here's a simple example of an exploit script (see [`.example/example.py`](https://github.com/omrina/FindMyLibc/blob/main/example/example.py)).
